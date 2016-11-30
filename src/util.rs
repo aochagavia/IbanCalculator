@@ -10,10 +10,12 @@ pub fn m_proef(test: u32, modulo: u32) -> bool {
     (counter % modulo) == 0
 }
 
-pub fn sha1_hex_to_bytes(hex: &str) -> Box<[u8; 20]> {
+pub fn sha1_hex_to_bytes(hex: &str) -> Option<Box<[u8; 20]>> {
     // Since we want to extract 20 bytes, the original string needs
     // to provide 40 characters
-    assert_eq!(hex.len(), 40);
+    if hex.len() != 40 {
+        return None;
+    }
 
     let mut buffer = [0; 20];
     let bytes = hex.as_bytes();
@@ -25,14 +27,17 @@ pub fn sha1_hex_to_bytes(hex: &str) -> Box<[u8; 20]> {
         let second = first + 1;
 
         // Push them into a string and parse them as a hex number
+        dummy_str.clear();
         dummy_str.push(bytes[first] as char);
         dummy_str.push(bytes[second] as char);
-        let byte = u8::from_str_radix(&dummy_str, 16).unwrap();
-        dummy_str.clear();
+        let byte = u8::from_str_radix(&dummy_str, 16);
 
         // Write the resulting byte in the buffer
-        buffer[i] = byte;
+        match byte {
+            Ok(b) => buffer[i] = b,
+            Err(_) => return None
+        }
     }
 
-    Box::new(buffer)
+    Some(Box::new(buffer))
 }

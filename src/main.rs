@@ -5,7 +5,12 @@ mod program_mode;
 mod settings;
 mod util;
 
+use parse::FromArgsError::InvalidHash;
+
 fn main() {
-    let (settings, program_mode) = parse::from_args().expect("Error parsing settings");
-    program_mode.run(&settings)
+    match parse::from_args() {
+        Ok((settings, program_mode)) => program_mode.run(&settings),
+        Err(InvalidHash(_)) => println!("-1"),
+        Err(e) => panic!(e)
+    }
 }

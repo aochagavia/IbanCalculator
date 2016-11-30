@@ -8,6 +8,7 @@ use util;
 #[derive(Debug)]
 pub enum FromArgsError {
     InvalidArgumentAmount(usize),
+    InvalidHash(String),
     InvalidLockNumber(i32),
     InvalidProgramMode(i32),
     ParseError(&'static str, ParseIntError)
@@ -52,7 +53,10 @@ pub fn from_args() -> Result<(Settings, ProgramMode), FromArgsError> {
     let program_mode = match args[5].parse() {
         Ok(0) => ProgramMode::Count,
         Ok(1) => ProgramMode::List,
-        Ok(2) => ProgramMode::Search(util::sha1_hex_to_bytes(&args[6])),
+        Ok(2) => match util::sha1_hex_to_bytes(&args[6]) {
+            Some(hash) => ProgramMode::Search(hash),
+            None => return Err(InvalidHash(args[6].to_owned()))
+        },
         Ok(n) => return Err(InvalidProgramMode(n)),
         Err(e) => return Err(ParseError("Program mode", e))
     };

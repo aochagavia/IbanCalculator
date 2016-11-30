@@ -1,8 +1,7 @@
 use std::io::{self, BufRead};
 use std::num::ParseIntError;
 
-use program_mode::ProgramMode;
-use settings::Settings;
+use settings::{Mode, Settings};
 use util;
 
 #[derive(Debug)]
@@ -10,11 +9,11 @@ pub enum FromArgsError {
     InvalidArgumentAmount(usize),
     InvalidHash(String),
     InvalidLockNumber(i32),
-    InvalidProgramMode(i32),
+    InvalidMode(i32),
     ParseError(&'static str, ParseIntError)
 }
 
-pub fn from_args() -> Result<(Settings, ProgramMode), FromArgsError> {
+pub fn from_args() -> Result<(Settings, Mode), FromArgsError> {
     let stdin = io::stdin();
     let stdin = stdin.lock();
     let line = stdin.lines().next().unwrap().unwrap();
@@ -51,14 +50,14 @@ pub fn from_args() -> Result<(Settings, ProgramMode), FromArgsError> {
     };
 
     let program_mode = match args[5].parse() {
-        Ok(0) => ProgramMode::Count,
-        Ok(1) => ProgramMode::List,
+        Ok(0) => Mode::Count,
+        Ok(1) => Mode::List,
         Ok(2) => match util::sha1_hex_to_bytes(&args[6]) {
-            Some(hash) => ProgramMode::Search(hash),
+            Some(hash) => Mode::Search(hash),
             None => return Err(InvalidHash(args[6].to_owned()))
         },
-        Ok(n) => return Err(InvalidProgramMode(n)),
-        Err(e) => return Err(ParseError("Program mode", e))
+        Ok(n) => return Err(InvalidMode(n)),
+        Err(e) => return Err(ParseError("Mode", e))
     };
 
     Ok((settings, program_mode))

@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["Reinier Maas <reiniermaas@hotmail.com>"]
 
 [dependencies]
+rayon = "0.5"
 sha1 = "0.2"

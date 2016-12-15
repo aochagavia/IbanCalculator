@@ -1,5 +1,5 @@
 use std::io::Write;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Mutex;
 
 use rayon::{self, Configuration};
 use rayon::prelude::*;
@@ -30,18 +30,18 @@ impl ProgramMode for RayonMode {
     }
 
     fn run_list(settings: &Settings) {
-        // FIXME: the counter in the output is not sequential because
-        // println uses its own lock.
-
         // For all x: bottom <= x < top
         //        and m_proef(x, modulo)
         // Print the count and the number
         let modulo = settings.modulo;
         let range = (settings.bottom .. settings.top).into_par_iter();
-        let counter = AtomicUsize::new(1);
+
+        let mutex = Mutex::new(1);
+
         range.filter(|&x| util::m_proef(x, modulo)).for_each(|x| {
-            let count = counter.fetch_add(1, Ordering::SeqCst);
-            println!("{} {}", count, x);
+            let mut counter = mutex.lock().unwrap();
+            println!("{} {}", *counter, x);
+            *counter += 1;
         });
     }
 

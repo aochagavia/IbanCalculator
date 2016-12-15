@@ -1,4 +1,5 @@
 use std::io::Write;
+use std::fmt::Debug;
 use std::sync::Mutex;
 use std::thread;
 
@@ -11,17 +12,32 @@ use super::Backend;
 
 pub struct ThreadBackend(());
 
+impl ThreadBackend {
+    pub fn new() -> ThreadBackend {
+        ThreadBackend(())
+    }
+}
+
+fn split_ranges(low: u32, high: u32, chunks: u32) -> impl Iterator<Item=impl Iterator<Item=u32> + Debug> {
+    let delta = (high - low) / chunks;
+    (0..chunks).map(move |i| {
+        if (i == chunks - 1) {
+            low + delta * i..high
+        } else {
+            low + delta * i..low + delta * (1+i)
+        }
+    })
+}
+
 impl Backend for ThreadBackend {
     fn run_count(settings: &Settings) -> u32 {
         // For all x: bottom <= x < top
         //        and m_proef(x, modulo)
         // Count the numer of element satisfying the predicate
         let mut threads = vec![];
-        let delta = (settings.top - settings.bottom) / settings.threads;
 
-        for i in 0..settings.threads {
+        for range in split_ranges(settings.bottom, settings.top, settings.threads) {
             // Spin up another thread
-            let range = settings.top + delta * i..settings.top + delta * (1+i);
             let modulo = settings.modulo;
             threads.push(thread::spawn(move || {
                 let mut count = 0;
@@ -33,6 +49,7 @@ impl Backend for ThreadBackend {
                 count
             }));
         }
+
         let mut count = 0;
         for thread in threads {
             count += thread.join().unwrap();

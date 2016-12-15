@@ -1,3 +1,5 @@
+#![feature(conservative_impl_trait)]
+
 extern crate rayon;
 extern crate sha1;
 
@@ -6,14 +8,15 @@ mod parse;
 mod settings;
 mod util;
 
-use backend::{Backend, RayonBackend};
+use backend::{Backend, RayonBackend, ThreadBackend, SequentialBackend};
 use parse::FromArgsError::InvalidHash;
 use settings::{Mode, Settings};
 
 fn main() {
     match parse::from_args() {
         Ok((settings, mode)) => {
-            let backend = RayonBackend::new(settings.threads as usize);
+            //let backend = RayonBackend::new(settings.threads as usize);
+            let backend = ThreadBackend::new();
             run(backend, &settings, mode);
         }
         Err(InvalidHash(_)) => println!("-1"),

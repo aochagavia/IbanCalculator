@@ -27,10 +27,12 @@ impl ProgramMode for ThreadMode {
 
         for i in 0..settings.threads {
             // Spin up another thread
+            let range = settings.top + delta * i..settings.top + delta * (1+i);
+            let modulo = settings.modulo;
             threads.push(thread::spawn(move || {
                 let mut count = 0;
-                for x in settings.top + delta * i..settings.top + delta * (1+i) {
-                    if util::m_proef(x, settings.modulo) {
+                for x in range {
+                    if util::m_proef(x, modulo) {
                         count += 1;
                     }
                 }

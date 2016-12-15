@@ -1,5 +1,6 @@
 use std::io::Write;
 use std::sync::Mutex;
+use std::sync::mpsc;
 
 use rayon::{self, Configuration};
 use rayon::prelude::*;
@@ -47,15 +48,19 @@ impl ProgramMode for RayonMode {
 
     fn run_search(settings: &Settings, hash: Box<[u8; 20]>) -> Option<u32> {
         // FIXME: THIS IS SEQUENTIAL!
+        // Vec<range>
+        // Work stealing, as long as nothing has been found
 
         // For all x: bottom <= x < top
         //        and m_proef(x, modulo)
         // Find an x such that sha1(x) == hash
         let range = settings.bottom .. settings.top;
-        let mut sha1 = Sha1::new();
-        let mut buffer: Vec<u8> = Vec::with_capacity(9);
-        for x in range {
+        let (tx, rx) = mpsc::channel();
+        range.into_par_iter().find_any(|&x| {
             if util::m_proef(x, settings.modulo) {
+                let mut sha1 = Sha1::new();
+                let mut buffer: Vec<u8> = Vec::with_capacity(9);
+
                 // Turn the x into a string (the provided hash is derived from the string,
                 // not the number itself)
                 buffer.clear();
@@ -66,11 +71,14 @@ impl ProgramMode for RayonMode {
                 sha1.update(&buffer);
 
                 if sha1.digest().bytes() == *hash {
-                    return Some(x);
+                    tx.send(x).unwrap();
+                    return true;
                 }
             }
-        }
 
-        None
+            false
+        });
+
+        rx.try_recv().ok()
     }
 }

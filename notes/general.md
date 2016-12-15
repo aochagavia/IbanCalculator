@@ -1,0 +1,4 @@
+Modes:
+* Count
+* List
+* Search

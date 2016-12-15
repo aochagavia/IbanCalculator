@@ -7,17 +7,11 @@ use sha1::Sha1;
 use settings::Settings;
 use util;
 
-use super::ProgramMode;
+use super::Backend;
 
-pub struct ThreadMode(());
+pub struct ThreadBackend(());
 
-impl ThreadMode {
-    pub fn new(num_threads: usize) -> ThreadMode {
-        ThreadMode(())
-    }
-}
-
-impl ProgramMode for ThreadMode {
+impl Backend for ThreadBackend {
     fn run_count(settings: &Settings) -> u32 {
         // For all x: bottom <= x < top
         //        and m_proef(x, modulo)

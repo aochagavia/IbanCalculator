@@ -3,11 +3,11 @@ use sha1::Sha1;
 use settings::Settings;
 use util;
 
-use super::ProgramMode;
+use super::Backend;
 
-pub enum SequentialMode {}
+pub enum SequentialBackend {}
 
-impl ProgramMode for SequentialMode {
+impl Backend for SequentialBackend {
     fn run_count(settings: &Settings) -> u32 {
         // For all x: bottom <= x < top
         //        and m_proef(x, modulo)

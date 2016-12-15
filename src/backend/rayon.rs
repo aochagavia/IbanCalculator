@@ -6,18 +6,18 @@ use rayon::prelude::*;
 use settings::Settings;
 use util;
 
-use super::ProgramMode;
+use super::Backend;
 
-pub struct RayonMode(());
+pub struct RayonBackend(());
 
-impl RayonMode {
-    pub fn new(num_threads: usize) -> RayonMode {
+impl RayonBackend {
+    pub fn new(num_threads: usize) -> RayonBackend {
         rayon::initialize(Configuration::new().set_num_threads(num_threads)).unwrap();
-        RayonMode(())
+        RayonBackend(())
     }
 }
 
-impl ProgramMode for RayonMode {
+impl Backend for RayonBackend {
     fn run_count(settings: &Settings) -> u32 {
         // For all x: bottom <= x < top
         //        and m_proef(x, modulo)

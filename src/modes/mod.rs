@@ -1,5 +1,6 @@
 mod sequential;
 mod rayon;
+mod threads;
 
 use settings::Settings;
 

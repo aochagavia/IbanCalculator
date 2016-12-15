@@ -1,3 +1,7 @@
+use std::io::Write;
+
+use sha1::Sha1;
+
 pub fn m_proef(test: u32, modulo: u32) -> bool {
     let mut rest: u32 = test;
     let mut counter: u32 = 0;
@@ -8,6 +12,34 @@ pub fn m_proef(test: u32, modulo: u32) -> bool {
         index += 1;
     }
     (counter % modulo) == 0
+}
+
+pub fn valid_hash(x: u32, hash: &[u8; 20]) -> bool {
+    let mut sha1 = Sha1::new();
+    let mut buffer: Vec<u8> = Vec::with_capacity(9);
+
+    // Turn the x into a string (the provided hash is derived from the string,
+    // not the number itself)
+    write!(buffer, "{}", x).unwrap();
+
+    // Calculate the sha1 and compare
+    sha1.update(&buffer);
+    sha1.digest().bytes() == *hash
+}
+
+pub fn valid_hash_fast(x: u32,
+                       hash: &[u8; 20],
+                       buffer: &mut Vec<u8>,
+                       sha1: &mut Sha1) -> bool {
+    // Turn the x into a string (the provided hash is derived from the string,
+    // not the number itself)
+    buffer.clear();
+    write!(buffer, "{}", x).unwrap();
+
+    // Calculate the sha1 and compare
+    sha1.reset();
+    sha1.update(&buffer);
+    sha1.digest().bytes() == *hash
 }
 
 pub fn sha1_hex_to_bytes(hex: &str) -> Option<Box<[u8; 20]>> {

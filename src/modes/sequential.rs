@@ -1,5 +1,3 @@
-use std::io::Write;
-
 use sha1::Sha1;
 
 use settings::Settings;
@@ -44,26 +42,10 @@ impl ProgramMode for SequentialMode {
         // For all x: bottom <= x < top
         //        and m_proef(x, modulo)
         // Find an x such that sha1(x) == hash
-        let range = settings.bottom .. settings.top;
         let mut sha1 = Sha1::new();
         let mut buffer: Vec<u8> = Vec::with_capacity(9);
-        for x in range {
-            if util::m_proef(x, settings.modulo) {
-                // Turn the x into a string (the provided hash is derived from the string,
-                // not the number itself)
-                buffer.clear();
-                write!(buffer, "{}", x).unwrap();
-
-                // Calculate the sha1 and compare
-                sha1.reset();
-                sha1.update(&buffer);
-
-                if sha1.digest().bytes() == *hash {
-                    return Some(x);
-                }
-            }
-        }
-
-        None
+        (settings.bottom .. settings.top)
+            .find(|&x| util::m_proef(x, settings.modulo)
+                    && util::valid_hash_fast(x, &hash, &mut buffer, &mut sha1))
     }
 }

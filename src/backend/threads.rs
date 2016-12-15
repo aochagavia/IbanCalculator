@@ -1,6 +1,6 @@
 use std::io::Write;
 use std::fmt::Debug;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::thread;
 
 use sha1::Sha1;
@@ -21,7 +21,7 @@ impl ThreadBackend {
 fn split_ranges(low: u32, high: u32, chunks: u32) -> impl Iterator<Item=impl Iterator<Item=u32> + Debug> {
     let delta = (high - low) / chunks;
     (0..chunks).map(move |i| {
-        if (i == chunks - 1) {
+        if i == chunks - 1 {
             low + delta * i..high
         } else {
             low + delta * i..low + delta * (1+i)
@@ -61,16 +61,27 @@ impl Backend for ThreadBackend {
         // For all x: bottom <= x < top
         //        and m_proef(x, modulo)
         // Print the count and the number
-        //let modulo = settings.modulo;
-        //let range = (settings.bottom .. settings.top).into_par_iter();
-//
-        //let mutex = Mutex::new(1);
-//
-        //range.filter(|&x| util::m_proef(x, modulo)).for_each(|x| {
-        //    let mut counter = mutex.lock().unwrap();
-        //    println!("{} {}", *counter, x);
-        //    *counter += 1;
-        //});
+        let mut threads = vec![];
+        let mutex = Arc::new(Mutex::new(1));
+
+        for range in split_ranges(settings.bottom, settings.top, settings.threads) {
+            // Spin up another thread
+            let modulo = settings.modulo;
+            let mutex = mutex.clone();
+            threads.push(thread::spawn(move || {
+                for x in range {
+                    if util::m_proef(x, modulo) {
+                        let mut counter = mutex.lock().unwrap();
+                        println!("{} {}", *counter, x);
+                        *counter += 1;
+                    }
+                }
+            }));
+        }
+
+        for thread in threads {
+            thread.join();
+        }
     }
 
     fn run_search(settings: &Settings, hash: Box<[u8; 20]>) -> Option<u32> {

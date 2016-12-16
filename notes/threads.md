@@ -90,8 +90,52 @@ When main thread didn't drop it's `send channel` and entered the loop on the `re
 The loop on the recieving end would only close when all writeble channels are dropped.
 This resulted in an endless loop.
 
-(Error commit hash ea108c0386f401de356d744fbf4edd0cd4ccbf5c)
-(Fix commit hash e94b9eb91bd7112b5fd72b334e9304f48540ea46)
+Error code: (commit hash ea108c0386f401de356d744fbf4edd0cd4ccbf5c)
+```rust
+let (send, recv) = mpsc::channel();
+for range in split_ranges(settings.bottom, settings.top, settings.threads) {
+    // Spin up another thread
+    let modulo = settings.modulo;
+    let send = send.clone();
+    threads.push(thread::spawn(move || {
+        for x in range {
+            if util::m_proef(x, modulo) {
+                send.send(x).unwrap();
+            }
+        };
+        drop(send);
+    }));
+}
+let mut counter = 1;
+for x in recv {
+   println!("{} {}", counter, x);
+   counter += 1;
+}
+```
+
+Correct code: (commit hash e94b9eb91bd7112b5fd72b334e9304f48540ea46)
+```rust
+let (send, recv) = mpsc::channel();
+for range in split_ranges(settings.bottom, settings.top, settings.threads) {
+    // Spin up another thread
+    let modulo = settings.modulo;
+    let send = send.clone();
+    threads.push(thread::spawn(move || {
+        for x in range {
+            if util::m_proef(x, modulo) {
+                send.send(x).unwrap();
+            }
+        };
+        drop(send);
+    }));
+}
+drop(send);
+let mut counter = 1;
+for x in recv {
+   println!("{} {}", counter, x);
+   counter += 1;
+}
+```
 
 # Search
 

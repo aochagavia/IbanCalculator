@@ -92,28 +92,23 @@ impl Backend for ThreadBackend {
         //        and m_proef(x, modulo)
         // Find an x such that sha1(x) == hash
         let mut threads = vec![];
-        let hash = Arc::new(hash); // encapsulate hash in Arc
+        let (send, recv) = mpsc::channel();
+
         for range in split_ranges(settings.bottom, settings.top, settings.threads) {
             // Spin up another thread
             let modulo = settings.modulo;
-            let hash = hash.clone();
+            let send = send.clone();
             threads.push(thread::spawn(move || {
                 for x in range {
-                    if util::m_proef(x, modulo) && util::valid_hash(x, hash.as_ref()) {
-                        return Some(x);
+                    if util::m_proef(x, modulo) && util::valid_hash(x, &hash) {
+                        send.send(x).unwrap();
                     }
                 };
-                None
+                drop(send);
             }));
         }
+        drop(send);
 
-        for thread in threads {
-            match thread.join().unwrap() {
-                Some(x) => return Some(x),
-                None => {},
-            }
-        }
-
-        None
+        recv.recv().ok()
     }
 }

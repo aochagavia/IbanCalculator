@@ -78,6 +78,7 @@ impl Backend for ThreadBackend {
                 drop(send);
             }));
         }
+        drop(send);
 
         let mut counter = 1;
         for x in recv {

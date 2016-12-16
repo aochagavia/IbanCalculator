@@ -46,29 +46,12 @@ When main thread didn't drop it's `send channel` and entered the loop on the `re
 The loop on the recieving end would only close when all writeble channels are dropped.
 This resulted in an endless loop.
 
-The list task is not completely a good match for rayon, since we are required
-to print counter in sequential order. That is, the output needs to be ...
-
-First attempt: use an atomic integer (see commit XXX). Note: we forgot to commit
-when needed, but
-
-However, using an atomic integer does not produce correct results. The problem
-with this approach is that `println!` has an own lock, to ensure writes to
-`stdout` are synchronized. Therefore, while the atomic integer is sequentially
-implemented, the calls to `println!` have a race condition in which the first
-thread to get the lock will print, regardless of the count.
-
-In order to solve this problem, we remove the atomic integer and use a mutually
-exclusive lock (`Mutex`). This way we can ensure that both the increment and
-the write to `stdout` are done as a single transaction.
-
-As you can see, while Rust is able to forbid concurrent writes to the same
-variables, it is unable to forbid race conditions in a general sense. The
-same holds for deadlocks, for instance.
+(Error commit hash ea108c0386f401de356d744fbf4edd0cd4ccbf5c)
+(Fix commit hash e94b9eb91bd7112b5fd72b334e9304f48540ea46)
 
 # Search
 
-Search needs the hash on all different threads.
+Search needs the `hash` variable on all different threads.
 To accomplish memory safety accross thread boundaries,
 with the certainty that the memory gets freed after it is no longer referenced,
 we chose to encapsulate the hash in a atomic reference counter (`Arc`).

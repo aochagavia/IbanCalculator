@@ -1,6 +1,6 @@
 # Threads
 
-What are threads? They are the units that the operating system can schedule processing time for your processesses.
+What are threads? They are the units that the operating system can schedule processing time for your processes.
 
 # Split range
 
@@ -73,6 +73,9 @@ threads.push(thread::spawn(move || {
     count
 }));
 ````
+
+In order to make the code compile we need to copy the data required by the different threads.
+These copies of the data are moved into the scope of the thread.
 
 # List
 

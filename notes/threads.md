@@ -30,8 +30,49 @@ On joining the threads there results are added and the accumelator is returnded 
 The individual threads execute the `m_proef` on each individual element in their range.
 Adding `1` to their local count if the m_proef has a positive result.
 
-problems -> ...
+The problem was that the error message was unclear.
+It said that the thread must outlive lifetime `'static`.
+Solving this error was hard because we needed to // discover that the variabl all variables
+//It needed to indicate that the shared variables could not be guarenteed to outlive -> ...
 
+Error message:
+```
+C:\git\CPD\IbanCalculator>cargo build --release
+   Compiling iban_calculator v0.1.0 (file:///C:/git/CPD/IbanCalculator)
+error[E0477]: the type `[closure@src\modes\threads.rs:30:40: 38:14 settings:&settings::Settings, delta:u32, i:u32]` does not fulfill the required lifetime
+  --> src\modes\threads.rs:30:26
+30 |             threads.push(thread::spawn(move || {
+   |                          ^^^^^^^^^^^^^
+   = note: type must outlive the static lifetime
+```
+
+Error code: (commit hash 6ea8aa8a6a13571cab100ec4032307bea16f1e7a)
+```rust
+threads.push(thread::spawn(move || {
+    let mut count = 0;
+    for x in settings.top + delta * i..settings.top + delta * (1+i) {
+        if util::m_proef(x, settings.modulo) {
+            count += 1;
+        }
+    }
+    count
+}));
+```
+
+Correct code: (commit hash 3b43b9b55bc71fd898fca52ffb8a279d384eefa4)
+```rust
+let range = settings.top + delta * i..settings.top + delta * (1+i);
+let modulo = settings.modulo;
+threads.push(thread::spawn(move || {
+    let mut count = 0;
+    for x in range {
+        if util::m_proef(x, modulo) {
+            count += 1;
+        }
+    }
+    count
+}));
+````
 
 # List
 

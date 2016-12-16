@@ -177,7 +177,7 @@ for range in split_ranges(settings.bottom, settings.top, settings.threads) {
 }
 ```
 
-Correct code: (commit hash )
+Correct code: (commit hash 0917d8a9d0c5d9294ac6981a5e9515a74a743c73)
 ```
 let hash = Arc::new(hash);
 for range in split_ranges(settings.bottom, settings.top, settings.threads) {

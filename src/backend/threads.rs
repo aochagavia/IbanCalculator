@@ -1,6 +1,6 @@
 use std::io::Write;
 use std::fmt::Debug;
-use std::sync::{Arc, Mutex};
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 
 use sha1::Sha1;
@@ -61,51 +61,53 @@ impl Backend for ThreadBackend {
         // For all x: bottom <= x < top
         //        and m_proef(x, modulo)
         // Print the count and the number
+
         let mut threads = vec![];
-        let mutex = Arc::new(Mutex::new(1));
+        let (send, recv) = mpsc::channel();
 
         for range in split_ranges(settings.bottom, settings.top, settings.threads) {
             // Spin up another thread
             let modulo = settings.modulo;
-            let mutex = mutex.clone();
+            let send = send.clone();
             threads.push(thread::spawn(move || {
                 for x in range {
                     if util::m_proef(x, modulo) {
-                        let mut counter = mutex.lock().unwrap();
-                        println!("{} {}", *counter, x);
-                        *counter += 1;
+                        send.send(x).unwrap();
                     }
-                }
+                };
+                drop(send);
             }));
         }
 
-        for thread in threads {
-            thread.join();
+        let mut counter = 1;
+        for x in recv {
+           println!("{} {}", counter, x);
+           counter += 1;
         }
     }
 
     fn run_search(settings: &Settings, hash: Box<[u8; 20]>) -> Option<u32> {
-        // FIXME: THIS IS SEQUENTIAL!
-
         // For all x: bottom <= x < top
         //        and m_proef(x, modulo)
         // Find an x such that sha1(x) == hash
         let mut threads = vec![];
-
+        let hash = Arc::new(hash); // encapsulate hash in Arc
         for range in split_ranges(settings.bottom, settings.top, settings.threads) {
             // Spin up another thread
             let modulo = settings.modulo;
+            let hash = hash.clone();
             threads.push(thread::spawn(move || {
                 for x in range {
-                    if util::m_proef(x, modulo) && util::valid_hash(x, &hash) {
+                    if util::m_proef(x, modulo) && util::valid_hash(x, hash.as_ref()) {
                         return Some(x);
                     }
-                }
+                };
+                None
             }));
         }
 
         for thread in threads {
-            match thread.join() {
+            match thread.join().unwrap() {
                 Some(x) => return Some(x),
                 None => {},
             }

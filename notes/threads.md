@@ -101,3 +101,59 @@ with the certainty that the memory gets freed after it is no longer referenced,
 we chose to encapsulate the hash in a atomic reference counter (`Arc`).
 
 problems -> errors about hash when no Arc is used
+
+Error message:
+```
+error[E0382]: capture of moved value: `hash`
+   --> src\backend\threads.rs:103:73
+    |
+101 |             threads.push(thread::spawn(move || {
+    |                                        ------- value moved (into closure) here
+102 |                 for x in range {
+103 |                     if util::m_proef(x, modulo) && util::valid_hash(x, &hash) {
+    |                                                                         ^^^^ value captured here after move
+    |
+    = note: move occurs because `hash` has type `Box<[u8; 20]>`, which does not implement the `Copy` trait
+
+error: aborting due to previous error
+
+error: Could not compile `iban_calculator`.
+
+To learn more, run the command again with --verbose.
+```
+
+Error code: (commit hash 1b672ffe34cf60f68ee68a753faa3ebd1551c622)
+```
+for range in split_ranges(settings.bottom, settings.top, settings.threads) {
+    // Spin up another thread
+    let modulo = settings.modulo;
+    let send = send.clone();
+    threads.push(thread::spawn(move || {
+        for x in range {
+            if util::m_proef(x, modulo) && util::valid_hash(x, &hash) {
+                send.send(x).unwrap();
+            }
+        };
+        drop(send);
+    }));
+}
+```
+
+Correct code: (commit hash )
+```
+let hash = Arc::new(hash);
+for range in split_ranges(settings.bottom, settings.top, settings.threads) {
+    // Spin up another thread
+    let modulo = settings.modulo;
+    let send = send.clone();
+    let hash = hash.clone();
+    threads.push(thread::spawn(move || {
+        for x in range {
+            if util::m_proef(x, modulo) && util::valid_hash(x, &hash) {
+                send.send(x).unwrap();
+            }
+        };
+        drop(send);
+    }));
+}
+```

@@ -5,7 +5,7 @@ use util;
 
 use super::Backend;
 
-pub enum SequentialBackend {}
+pub struct SequentialBackend;
 
 impl Backend for SequentialBackend {
     fn run_count(settings: &Settings) -> u32 {

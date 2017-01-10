@@ -1,22 +1,13 @@
-use std::io::Write;
 use std::fmt::Debug;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{mpsc, Arc};
 use std::thread;
-
-use sha1::Sha1;
 
 use settings::Settings;
 use util;
 
 use super::Backend;
 
-pub struct ThreadBackend(());
-
-impl ThreadBackend {
-    pub fn new() -> ThreadBackend {
-        ThreadBackend(())
-    }
-}
+pub struct ThreadBackend;
 
 fn split_ranges(low: u32, high: u32, chunks: u32) -> impl Iterator<Item=impl Iterator<Item=u32> + Debug> {
     let delta = (high - low) / chunks;

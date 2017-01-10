@@ -51,7 +51,8 @@ impl<T> SpinLock<T> {
     }
 }
 
-unsafe impl<T> Sync for SpinLock<T> where T: Sync {}
+unsafe impl<T: Send> Sync for SpinLock<T> {}
+unsafe impl<T: Send> Send for SpinLock<T> {}
 
 pub struct SpinLockBackend(RayonBackend);
 

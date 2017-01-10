@@ -29,7 +29,7 @@ impl<T> SpinLock<T> {
 impl<T: ?Sized> SpinLock<T> {
     /// Acquires a SpinLockGuard, spinning the current thread until it is able to do so.
     pub fn lock(&self) -> SpinLockGuard<T> {
-        while !self.lock.compare_and_swap(false, true, Ordering::SeqCst) {
+        while self.lock.compare_and_swap(false, true, Ordering::SeqCst) {
             while self.lock.load(Ordering::SeqCst) { }
         }
         // Exit the spinning wait, holding the lock

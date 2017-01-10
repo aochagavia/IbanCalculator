@@ -19,32 +19,35 @@ use settings::{Mode, Settings};
 
 fn main() {
     match parse::from_args() {
-        Ok((settings, mode)) => {
-            // NOTE: uncomment the desired backend below
-            // -----
-
-            //let backend = backend::SequentialBackend;
-            //let backend = RayonBackend::new(settings.threads as usize);
-            //let backend = backend::SpinLockBackend::new(settings.threads as usize);
-            let backend = backend::AdvancedSpinLockBackend::new(settings.threads as usize);
-            //let backend = backend::ThreadBackend;
-            run(backend, &settings, mode);
-        }
+        Ok((settings, mode)) => run_any_backend(&settings, mode),
         Err(InvalidHash(_)) => println!("-1"),
         Err(e) => panic!(e)
     }
 }
 
-/// This function is not intended to be run. Instead, it provides a reference
-/// of how to run the program using the different backends. And it ensures that
-/// everything keeps compiling after the program is modified (unlike comments).
-#[allow(dead_code)]
+/// Run the `IbanCalculator` assignment, with the given backend, settings and mode
+pub fn run<T: Backend>(_imp: T, settings: &Settings, mode: Mode) {
+    use self::Mode::*;
+    match mode {
+        Count => println!("{}", T::run_count(settings)),
+        List => T::run_list(settings),
+        Search(hash) => match T::run_search(settings, hash) {
+            Some(x) => println!("{}", x),
+            None => println!("-1")
+        }
+    }
+}
+
+/// Run the `IbanCalculator` assignment using any backend
 fn run_any_backend(settings: &Settings, mode: Mode) {
     use backend::*;
     let mut rng = rand::thread_rng();
     let range = Range::new(0, 5);
 
-    match range.ind_sample(&mut rng) {
+    // Note: in case you want to run a particular backend, replace the backend index
+    // by the desired integer.
+    let backend_index = range.ind_sample(&mut rng);
+    match backend_index {
         0 => {
             let backend = SpinLockBackend::new(settings.threads as usize);
             run(backend, settings, mode)
@@ -60,17 +63,5 @@ fn run_any_backend(settings: &Settings, mode: Mode) {
         3 => run(ThreadBackend, settings, mode),
         4 => run(SequentialBackend, settings, mode),
         _ => unreachable!(),
-    }
-}
-
-pub fn run<T: Backend>(_imp: T, settings: &Settings, mode: Mode) {
-    use self::Mode::*;
-    match mode {
-        Count => println!("{}", T::run_count(settings)),
-        List => T::run_list(settings),
-        Search(hash) => match T::run_search(settings, hash) {
-            Some(x) => println!("{}", x),
-            None => println!("-1")
-        }
     }
 }

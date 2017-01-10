@@ -2,7 +2,7 @@ use rayon::{self, Configuration};
 use rayon::prelude::*;
 
 use settings::Settings;
-use spin_lock_advanced::SpinLock;
+use lock::AdvancedSpinLock as SpinLock;
 use util;
 
 use super::Backend;

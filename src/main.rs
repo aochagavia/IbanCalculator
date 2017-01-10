@@ -6,10 +6,10 @@ extern crate rayon;
 extern crate sha1;
 
 mod backend;
+mod lock;
 mod parse;
 mod settings;
 mod util;
-mod spin_lock_advanced;
 
 use rand::distributions::{Range, IndependentSample};
 

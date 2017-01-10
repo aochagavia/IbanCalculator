@@ -1,32 +1,31 @@
 use std::cell::UnsafeCell;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::ops::{Deref, DerefMut};
-use std::marker;
 
-pub struct SpinLock<T: ?Sized> {
+pub struct AdvancedSpinLock<T: ?Sized> {
     lock: Box<AtomicBool>,
     data: UnsafeCell<T>,
 }
-unsafe impl<T: ?Sized + Send> Send for SpinLock<T> { }
-unsafe impl<T: ?Sized + Send> Sync for SpinLock<T> { }
+unsafe impl<T: ?Sized + Send> Send for AdvancedSpinLock<T> { }
+unsafe impl<T: ?Sized + Send> Sync for AdvancedSpinLock<T> { }
 
 pub struct SpinLockGuard<'a, T: ?Sized + 'a> {
-    __spin_lock: &'a SpinLock<T>,
+    __spin_lock: &'a AdvancedSpinLock<T>,
 }
 
-impl<'a, T: ?Sized> !marker::Send for SpinLockGuard<'a, T> { }
+impl<'a, T: ?Sized> !Send for SpinLockGuard<'a, T> { }
 
-impl<T> SpinLock<T> {
-    /// Creates a new SpinLock in an unlocked state ready for use.
-    pub fn new(t: T) -> SpinLock<T> {
-        SpinLock {
+impl<T> AdvancedSpinLock<T> {
+    /// Creates a new AdvancedSpinLock in an unlocked state ready for use.
+    pub fn new(t: T) -> AdvancedSpinLock<T> {
+        AdvancedSpinLock {
             lock: Box::new(AtomicBool::new(false)),
             data: UnsafeCell::new(t),
         }
     }
 }
 
-impl<T: ?Sized> SpinLock<T> {
+impl<T: ?Sized> AdvancedSpinLock<T> {
     /// Acquires a SpinLockGuard, spinning the current thread until it is able to do so.
     pub fn lock(&self) -> SpinLockGuard<T> {
         while self.lock.compare_and_swap(false, true, Ordering::SeqCst) {
@@ -46,7 +45,7 @@ impl<'a, T: ?Sized> Deref for SpinLockGuard<'a, T> {
 }
 
 impl<'a, T: ?Sized> SpinLockGuard<'a, T> {
-    unsafe fn new(lock: &'a SpinLock<T>) -> SpinLockGuard<'a, T> {
+    unsafe fn new(lock: &'a AdvancedSpinLock<T>) -> SpinLockGuard<'a, T> {
         SpinLockGuard {
             __spin_lock: lock,
         }

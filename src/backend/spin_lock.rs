@@ -1,3 +1,4 @@
+use std::cell::UnsafeCell;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use rayon::prelude::*;
@@ -8,19 +9,25 @@ use super::rayon::RayonBackend;
 use settings::Settings;
 use util;
 
-struct SpinLock {
-    // true if the lock is taken
-    lock_taken: AtomicBool
+pub struct SpinLock<T> {
+    /// The data protected by this lock
+    ///
+    /// Note that `UnsafeCell<T>` is the only legal way to obtain aliasable data
+    /// that is considered mutable
+    data: UnsafeCell<T>,
+    /// True if the lock is taken
+    lock_taken: AtomicBool,
 }
 
-impl SpinLock {
-    fn new() -> SpinLock {
+impl<T> SpinLock<T> {
+    pub fn new(data: T) -> SpinLock<T> {
         SpinLock {
+            data: UnsafeCell::new(data),
             lock_taken: AtomicBool::new(false)
         }
     }
 
-    fn lock<F: Fn()>(&self, f: F) {
+    pub fn lock<F: Fn(&mut T)>(&self, f: F) {
         // Spin while the lock is taken
         // In each iteration, try to take the lock
         // CaS will only swap the values if the previous one was false
@@ -30,7 +37,11 @@ impl SpinLock {
             // If the lock was not taken, it means that CaS just took it for us,
             // so we can go ahead and execute our function
             if !is_taken {
-                f();
+                // We need to .get().as_mut().unwrap() to get a mutable reference to
+                // the protected data. Unsafe is needed to indicate the compiler that
+                // the programmer has ensured this is correct.
+                let data = unsafe { self.data.get().as_mut() }.unwrap();
+                f(data);
 
                 // Release the lock and exit the loop
                 self.lock_taken.store(false, Ordering::SeqCst);
@@ -39,6 +50,8 @@ impl SpinLock {
         }
     }
 }
+
+unsafe impl<T> Sync for SpinLock<T> where T: Sync {}
 
 pub struct SpinLockBackend(RayonBackend);
 
@@ -63,13 +76,12 @@ impl Backend for SpinLockBackend {
         let modulo = settings.modulo;
         let range = (settings.bottom .. settings.top).into_par_iter();
 
-        let mut counter = 1;
-        let mutex = SpinLock::new();
+        let mutex = SpinLock::new(1);
 
         range.filter(|&x| util::m_proef(x, modulo)).for_each(|x| {
-            mutex.lock(|| {
+            mutex.lock(|counter| {
                 println!("{} {}", counter, x);
-                counter += 1;
+                *counter += 1;
             });
         });
     }

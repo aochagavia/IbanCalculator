@@ -10,15 +10,15 @@ mod settings;
 mod util;
 mod spin_lock_advanced;
 
-use backend::{Backend, RayonBackend, ThreadBackend, SequentialBackend};
+use backend::Backend;
 use parse::FromArgsError::InvalidHash;
 use settings::{Mode, Settings};
 
 fn main() {
     match parse::from_args() {
         Ok((settings, mode)) => {
-            let backend = RayonBackend::new(settings.threads as usize);
-            //let backend = ThreadBackend::new();
+            //let backend = RayonBackend::new(settings.threads as usize);
+            let backend = backend::SpinLockBackend::new(settings.threads as usize);
             run(backend, &settings, mode);
         }
         Err(InvalidHash(_)) => println!("-1"),

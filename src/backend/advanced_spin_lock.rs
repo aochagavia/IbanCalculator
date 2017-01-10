@@ -1,19 +1,17 @@
-use rayon::{self, Configuration};
-use rayon::prelude::*;
-
 use settings::Settings;
 use lock::AdvancedSpinLock as SpinLock;
 use util;
 
+use rayon::prelude::*;
+
 use super::Backend;
 use super::rayon::RayonBackend;
 
-pub struct AdvancedSpinLockBackend(());
+pub struct AdvancedSpinLockBackend(RayonBackend);
 
 impl AdvancedSpinLockBackend {
     pub fn new(num_threads: usize) -> AdvancedSpinLockBackend {
-        rayon::initialize(Configuration::new().set_num_threads(num_threads)).unwrap();
-        AdvancedSpinLockBackend(())
+        AdvancedSpinLockBackend(RayonBackend::new(num_threads))
     }
 }
 

@@ -11,7 +11,7 @@ unsafe impl<T: ?Sized + Send> Send for SpinLock<T> { }
 unsafe impl<T: ?Sized + Send> Sync for SpinLock<T> { }
 
 pub struct SpinLockGuard<'a, T: ?Sized + 'a> {
-    __spinLock: &'a SpinLock<T>,
+    __spin_lock: &'a SpinLock<T>,
 }
 
 impl<'a, T: ?Sized> !marker::Send for SpinLockGuard<'a, T> { }
@@ -41,26 +41,26 @@ impl<'a, T: ?Sized> Deref for SpinLockGuard<'a, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
-        unsafe { &*self.__spinLock.data.get() }
+        unsafe { &*self.__spin_lock.data.get() }
     }
 }
 
 impl<'a, T: ?Sized> SpinLockGuard<'a, T> {
     unsafe fn new(lock: &'a SpinLock<T>) -> SpinLockGuard<'a, T> {
         SpinLockGuard {
-            __spinLock: lock,
+            __spin_lock: lock,
         }
     }
 }
 impl<'a, T: ?Sized> DerefMut for SpinLockGuard<'a, T> {
     fn deref_mut(&mut self) -> &mut T {
-        unsafe { &mut *self.__spinLock.data.get() }
+        unsafe { &mut *self.__spin_lock.data.get() }
     }
 }
 
 impl<'a, T: ?Sized> Drop for SpinLockGuard<'a, T> {
     #[inline]
     fn drop(&mut self) {
-        self.__spinLock.lock.store(false, Ordering::SeqCst);
+        self.__spin_lock.lock.store(false, Ordering::SeqCst);
     }
 }

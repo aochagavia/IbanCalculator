@@ -2,7 +2,7 @@ use rayon::{self, Configuration};
 use rayon::prelude::*;
 
 use settings::Settings;
-use spin_lock_advanced::{SpinLock, SpinLockGuard};
+use spin_lock_advanced::SpinLock;
 use util;
 
 use super::Backend;
@@ -32,10 +32,10 @@ impl Backend for AdvancedSpinLockBackend {
         let modulo = settings.modulo;
         let range = (settings.bottom .. settings.top).into_par_iter();
 
-        let spinLock = SpinLock::new(1);
+        let spin_lock = SpinLock::new(1);
 
         range.filter(|&x| util::m_proef(x, modulo)).for_each(|x| {
-            let mut counter = spinLock.lock();
+            let mut counter = spin_lock.lock();
             println!("{} {}", *counter, x);
             *counter += 1;
         });

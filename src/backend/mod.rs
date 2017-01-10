@@ -1,15 +1,15 @@
-mod rayon;
-mod rayon_advanced_spin_lock;
 mod sequential;
+mod rayon;
 mod spin_lock;
+mod advanced_spin_lock;
 mod threads;
 
 use settings::Settings;
 
-//pub use self::rayon::RayonBackend;
-pub use self::rayon_advanced_spin_lock::RayonBackend;
 pub use self::sequential::SequentialBackend;
+pub use self::rayon::RayonBackend;
 pub use self::spin_lock::SpinLockBackend;
+pub use self::advanced_spin_lock::AdvancedSpinLockBackend;
 pub use self::threads::ThreadBackend;
 
 pub trait Backend {

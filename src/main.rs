@@ -17,8 +17,11 @@ use settings::{Mode, Settings};
 fn main() {
     match parse::from_args() {
         Ok((settings, mode)) => {
+            //let backend = backend::SequentialBackend;
             //let backend = RayonBackend::new(settings.threads as usize);
-            let backend = backend::SpinLockBackend::new(settings.threads as usize);
+            //let backend = backend::SpinLockBackend::new(settings.threads as usize);
+            let backend = backend::AdvancedSpinLockBackend::new(settings.threads as usize);
+            //let backend = backend::ThreadBackend::new();
             run(backend, &settings, mode);
         }
         Err(InvalidHash(_)) => println!("-1"),

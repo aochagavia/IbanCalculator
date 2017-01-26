@@ -1,7 +1,12 @@
-use std::io::Write;
+//! Utility functions
 
+use std::io::Write;
 use sha1::Sha1;
 
+/// Verifies if a given number passes the m_proef test.
+///
+/// This function is a generalized version of the function used to check
+/// IBAN numbers for validity.
 pub fn m_proef(test: u32, modulo: u32) -> bool {
     let mut rest: u32 = test;
     let mut counter: u32 = 0;
@@ -14,6 +19,7 @@ pub fn m_proef(test: u32, modulo: u32) -> bool {
     (counter % modulo) == 0
 }
 
+/// Verifies if the hash of a given number matches the hash passed as a parameter
 pub fn valid_hash(x: u32, hash: &[u8; 20]) -> bool {
     let mut sha1 = Sha1::new();
     let mut buffer: Vec<u8> = Vec::with_capacity(9);
@@ -27,6 +33,9 @@ pub fn valid_hash(x: u32, hash: &[u8; 20]) -> bool {
     sha1.digest().bytes() == *hash
 }
 
+/// Verifies if the hash of a given number matches the hash passed as a parameter
+///
+/// Note: reuses the buffer to reduce allocations
 pub fn valid_hash_fast(x: u32,
                        hash: &[u8; 20],
                        buffer: &mut Vec<u8>,
@@ -42,9 +51,11 @@ pub fn valid_hash_fast(x: u32,
     sha1.digest().bytes() == *hash
 }
 
+/// Transform a string of hexadecimal values to a byte string
 pub fn sha1_hex_to_bytes(hex: &str) -> Option<Box<[u8; 20]>> {
     // Since we want to extract 20 bytes, the original string needs
-    // to provide 40 characters
+    // to provide 40 characters. However, we need to check explicitly
+    // for this because the test suite passes wrong hash in one of the tests.
     if hex.len() != 40 {
         return None;
     }

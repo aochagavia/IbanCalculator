@@ -1,3 +1,7 @@
+//! This module provides functionality to parse input from stdin in order
+//! to construct a `Settings` struct and a `Mode`. These are necessary for
+//! the main program to run.
+
 use std::io::{self, BufRead};
 use std::num::ParseIntError;
 

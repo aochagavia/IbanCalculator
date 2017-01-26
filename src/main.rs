@@ -17,6 +17,7 @@ use backend::Backend;
 use parse::FromArgsError::InvalidHash;
 use settings::{Mode, Settings};
 
+/// The entry point of the appllication
 fn main() {
     match parse::from_args() {
         Ok((settings, mode)) => run_any_backend(&settings, mode),
@@ -47,7 +48,7 @@ fn run_any_backend(settings: &Settings, mode: Mode) {
     // Note: in case you want to run a particular backend, replace the backend index
     // by the desired integer.
     let backend_index = range.ind_sample(&mut rng);
-    match 3 {
+    match backend_index {
         0 => {
             let backend = SpinLockBackend::new(settings.threads as usize);
             run(backend, settings, mode)

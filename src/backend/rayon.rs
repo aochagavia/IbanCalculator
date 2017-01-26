@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Mutex;
 
 use rayon::{self, Configuration};
 use rayon::prelude::*;
@@ -34,11 +34,12 @@ impl Backend for RayonBackend {
         let modulo = settings.modulo;
         let range = (settings.bottom .. settings.top).into_par_iter();
 
-        let counter = AtomicUsize::new(1);
+        let mutex = Mutex::new(1);
 
         range.filter(|&x| util::m_proef(x, modulo)).for_each(|x| {
-            let prev = counter.fetch_add(1, Ordering::SeqCst);
-            println!("{} {}", prev, x);
+            let mut counter = mutex.lock().unwrap();
+            println!("{} {}", *counter, x);
+            *counter += 1;
         });
     }
 

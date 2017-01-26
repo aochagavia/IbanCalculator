@@ -12,15 +12,9 @@ impl Backend for SequentialBackend {
         // For all x: bottom <= x < top
         //        and m_proef(x, modulo)
         // Count the numer of element satisfying the predicate
+        let modulo = settings.modulo;
         let range = settings.bottom .. settings.top;
-        let mut counter = 0;
-        for x in range {
-            if util::m_proef(x, settings.modulo) {
-                counter += 1;
-            }
-        }
-
-        counter
+        range.filter(|&x| util::m_proef(x, modulo)).count() as u32
     }
 
     fn run_list(settings: &Settings) {

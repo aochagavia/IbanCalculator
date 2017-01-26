@@ -47,7 +47,7 @@ fn run_any_backend(settings: &Settings, mode: Mode) {
     // Note: in case you want to run a particular backend, replace the backend index
     // by the desired integer.
     let backend_index = range.ind_sample(&mut rng);
-    match backend_index {
+    match 3 {
         0 => {
             let backend = SpinLockBackend::new(settings.threads as usize);
             run(backend, settings, mode)

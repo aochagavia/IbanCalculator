@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::sync::{mpsc, Arc};
+use std::sync::atomic::{AtomicIsize, Ordering};
 use std::thread;
 
 use settings::Settings;
@@ -28,24 +29,15 @@ impl Backend for ThreadBackend {
         let mut threads = vec![];
 
         for range in split_ranges(settings.bottom, settings.top, settings.threads) {
-            // Spin up another thread
             let modulo = settings.modulo;
+
+            // Spin up another thread
             threads.push(thread::spawn(move || {
-                let mut count = 0;
-                for x in range {
-                    if util::m_proef(x, modulo) {
-                        count += 1;
-                    }
-                }
-                count
+                range.filter(|&x| util::m_proef(x, modulo)).count() as u32
             }));
         }
 
-        let mut count = 0;
-        for thread in threads {
-            count += thread.join().unwrap();
-        }
-        count
+        threads.into_iter().map(|thread| thread.join().unwrap()).sum()
     }
 
     fn run_list(settings: &Settings) {
@@ -57,9 +49,10 @@ impl Backend for ThreadBackend {
         let (send, recv) = mpsc::channel();
 
         for range in split_ranges(settings.bottom, settings.top, settings.threads) {
-            // Spin up another thread
             let modulo = settings.modulo;
             let send = send.clone();
+
+            // Spin up another thread
             threads.push(thread::spawn(move || {
                 for x in range {
                     if util::m_proef(x, modulo) {
@@ -71,6 +64,7 @@ impl Backend for ThreadBackend {
         }
         drop(send);
 
+        // The parent thread acts as printer thread as well
         let mut counter = 1;
         for x in recv {
            println!("{} {}", counter, x);
@@ -83,25 +77,33 @@ impl Backend for ThreadBackend {
         //        and m_proef(x, modulo)
         // Find an x such that sha1(x) == hash
         let mut threads = vec![];
-        let (send, recv) = mpsc::channel();
-        let hash = Arc::new(hash);
+        let hash = Arc::new(*hash);
+        let found = Arc::new(AtomicIsize::new(-1));
 
         for range in split_ranges(settings.bottom, settings.top, settings.threads) {
-            // Spin up another thread
             let modulo = settings.modulo;
-            let send = send.clone();
             let hash = hash.clone();
+            let found = found.clone();
+
+            // Spin up another thread
             threads.push(thread::spawn(move || {
                 for x in range {
+                    // Early stop if the number has been found
+                    if found.load(Ordering::Relaxed) != -1 {
+                        return;
+                    }
+
                     if util::m_proef(x, modulo) && util::valid_hash(x, &hash) {
-                        send.send(x).unwrap();
+                        found.store(x as isize, Ordering::Relaxed);
                     }
                 };
-                drop(send);
-            }));
-        }
-        drop(send);
+            }))
+        };
 
-        recv.recv().ok()
+        for thread in threads { thread.join().unwrap(); }
+        match found.load(Ordering::SeqCst) {
+            -1 => None,
+            x  => Some(x as u32)
+        }
     }
 }

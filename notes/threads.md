@@ -25,7 +25,7 @@ fn split_ranges(low: u32, high: u32, chunks: u32) -> impl Iterator<Item=impl Ite
 In order to make the speed up the greatest it is important to equally distribute the work accross the threads.
 The division of the work is handled by the `split_ranges` function.
 Thread handles are stored in a `Vec` this is needed to later `join` these threads.
-On joining the threads there results are added and the accumelator is returnded at the of the scope.
+On joining the threads there results are added and the accumulator is returned at the of the scope.
 
 The individual threads execute the `m_proef` on each individual element in their range.
 Adding `1` to their local count if the m_proef has a positive result.
@@ -80,14 +80,14 @@ These copies of the data are moved into the scope of the thread.
 # List
 
 The main problem with listing the numbers with the ever incrementing global counter.
-To make the solutions more diversive we chose to use a `channel`.
+To make the solutions more diverse we chose to use a `channel`.
 With a channel the work can be continued while the main thread writes the answers to the console.
 The main upside is that a channel works asynchronous, while writing to the console would need a lock.
 This could result in a more scalable solution.
 
 One problem was encountered that wasn't picked up as an error while implementing a channel based solution.
 When main thread didn't drop it's `send channel` and entered the loop on the `recv channel`.
-The loop on the recieving end would only close when all writeble channels are dropped.
+The loop on the receiving end would only close when all writeable channels are dropped.
 This resulted in an endless loop.
 
 Error code: (commit hash ea108c0386f401de356d744fbf4edd0cd4ccbf5c)
@@ -140,7 +140,7 @@ for x in recv {
 # Search
 
 Search needs the `hash` variable on all different threads.
-To accomplish memory safety accross thread boundaries,
+To accomplish memory safety across thread boundaries,
 with the certainty that the memory gets freed after it is no longer referenced,
 we chose to encapsulate the hash in a atomic reference counter (`Arc`).
 
@@ -195,3 +195,7 @@ for range in split_ranges(settings.bottom, settings.top, settings.threads) {
     }));
 }
 ```
+
+Note: it turns out this approach doesn't satisfy the specification,
+which says that the threads should terminate early in case the
+number searched for is found.
